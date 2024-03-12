@@ -1,33 +1,33 @@
-.DEFAULT_GOAL := build-run
+check-deps:
+	./gradlew dependencyUpdates -Drevision=release
+
+dev:
+	./gradlew run
+
+setup:
+	gradle wrapper --gradle-version 8.3
 
 clean:
-	make  -C app clean
+	./gradlew clean
 
 build:
-	make -C app build
+	./gradlew clean build
+
+start: dev
 
 install:
-	make -C app install
-
-run-dist:
-	make -C run-dist
-
-run:
-	make -C app run
-
-test:
-	make -C app test
-
-report:
-	make -C app report
+	./gradlew installDist
 
 lint:
-	make -C app lint
+	./gradlew checkstyleMain
 
-update-deps:
-	make -C app update-deps
+test:
+	./gradlew test
 
+image-build:
+	docker build -t hexletcomponents/java-javalin-example:latest .
 
-build-run: build run
+image-push:
+	docker push hexletcomponents/java-javalin-example:latest
 
 .PHONY: build

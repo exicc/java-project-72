@@ -10,7 +10,7 @@ plugins {
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 application {
-    mainClass.set("hexlet.code.Main")
+    mainClass.set("hexlet.code.App")
 }
 
 
@@ -27,7 +27,7 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.15.2")
     implementation("org.apache.commons:commons-text:1.10.0")
     implementation("gg.jte:jte:3.1.0")
-    implementation("org.slf4j:slf4j-simple:2.0.9")
+    implementation("org.slf4j:slf4j-simple:2.0.12")
     implementation("io.javalin:javalin:5.6.2")
     implementation("io.javalin:javalin-bundle:5.6.2")
     implementation("io.javalin:javalin-rendering:5.6.2")

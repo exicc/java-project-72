@@ -40,7 +40,15 @@ public class App {
         // System.setProperty("h2.traceLevel", "TRACE_LEVEL_SYSTEM_OUT=4");
 
         var hikariConfig = new HikariConfig();
-        hikariConfig.setJdbcUrl(getDatabaseUrl());
+        var databaseUrl = getDatabaseUrl();
+        hikariConfig.setJdbcUrl(databaseUrl);
+
+        if (databaseUrl.startsWith("jdbc:h2")) {
+            hikariConfig.setDriverClassName("org.h2.Driver");
+        } else if (databaseUrl.startsWith("jdbc:postgresql")) {
+            hikariConfig.setDriverClassName("org.postgresql.Driver");
+        }
+
         var dataSource = new HikariDataSource(hikariConfig);
         var sql = readResourceFile("schema.sql");
 

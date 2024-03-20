@@ -1,15 +1,17 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Hello World</title>
-</head>
-<body>
-<div class="col-lg-8 mx-auto p-4 py-md-5">
-    <main>
-        <h1 class="text-body-emphasis">Hello, World!</h1>
-    </main>
-</div>
-</body>
-</html>
+@import hexlet.code.dto.MainPage
+@param MainPage page
+
+
+@template.layout.page(content = @`
+    <div class="container mt-4">
+        <h1 class="mb-4">Анализатор страниц</h1>
+        <form action="/urls" method="post">
+            <div class="mb-3">
+                <label for="url" class="form-label">Введите URL:</label>
+                <input type="text" class="form-control" id="url" name="url" placeholder="URL">
+            </div>
+            <button type="submit" class="btn btn-primary">Проверить</button>
+        </form>
+    </div>
+`
+)

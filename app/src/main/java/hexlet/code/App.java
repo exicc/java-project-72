@@ -119,7 +119,7 @@ public class App {
             ctx.render("urls/index.jte", model("page", page));
         });
 
-        app.post("/urls", ctx -> {
+        /*app.post("/urls", ctx -> {
             var inputUrl = ctx.formParam("url");
 
             try {
@@ -147,7 +147,42 @@ public class App {
                 ctx.sessionAttribute("error", "Некорректный URL");
                 ctx.redirect("/urls");
             }
+        });*/
+        app.post("/urls", ctx -> {
+            var inputUrl = ctx.formParam("url");
+
+            try {
+                if (!inputUrl.startsWith("http://") && !inputUrl.startsWith("https://")) {
+                    throw new IllegalArgumentException("URI is not absolute");
+                }
+
+                URI uri = new URI(inputUrl);
+                URL url = uri.toURL();
+
+                var domainWithPort = url.getProtocol() + "://" + url.getHost()
+                        + (url.getPort() == -1 ? "" : ":" + url.getPort());
+
+                var existingUrl = UrlRepository.findByDomain(domainWithPort);
+                if (existingUrl.isPresent()) {
+                    ctx.sessionAttribute("error", "Страница уже существует | Page already exist");
+                    ctx.redirect("/urls");
+                    return;
+                }
+
+                Url newUrl = new Url(domainWithPort, new Timestamp(System.currentTimeMillis()));
+                UrlRepository.save(newUrl);
+
+                ctx.sessionAttribute("success", "Страница успешно добавлена");
+                ctx.redirect("/urls");
+            } catch (MalformedURLException e) {
+                ctx.sessionAttribute("error", "Некорректный URL");
+                ctx.redirect("/urls");
+            } catch (IllegalArgumentException e) {
+                ctx.sessionAttribute("error", "URL не является абсолютным | URL is not absolute");
+                ctx.redirect("/urls");
+            }
         });
+
 
         return app;
     }

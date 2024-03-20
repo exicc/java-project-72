@@ -153,7 +153,7 @@ public class App {
 
             try {
                 if (!inputUrl.startsWith("http://") && !inputUrl.startsWith("https://")) {
-                    throw new IllegalArgumentException("URI is not absolute");
+                    throw new IllegalArgumentException();
                 }
 
                 URI uri = new URI(inputUrl);

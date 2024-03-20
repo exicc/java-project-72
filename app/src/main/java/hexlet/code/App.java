@@ -2,7 +2,12 @@ package hexlet.code;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import hexlet.code.dto.MainPage;
+import hexlet.code.dto.urls.UrlPage;
+import hexlet.code.dto.urls.UrlsPage;
+import hexlet.code.model.Url;
 import hexlet.code.repository.BaseRepository;
+import hexlet.code.repository.UrlRepository;
 import io.javalin.Javalin;
 import gg.jte.ContentType;
 import gg.jte.TemplateEngine;
@@ -14,9 +19,17 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.List;
 import java.util.stream.Collectors;
+
+import static io.javalin.rendering.template.TemplateUtil.model;
 
 
 @Slf4j
@@ -51,15 +64,16 @@ public class App {
         var hikariConfig = new HikariConfig();
         var databaseUrl = getDatabaseUrl();
         hikariConfig.setJdbcUrl(databaseUrl);
-
+        var sql = "";
         if (databaseUrl.startsWith("jdbc:h2")) {
             hikariConfig.setDriverClassName("org.h2.Driver");
+            sql = readResourceFile("h2_schema.sql");
         } else if (databaseUrl.startsWith("jdbc:postgresql")) {
             hikariConfig.setDriverClassName("org.postgresql.Driver");
+            sql = readResourceFile("postgres_schema.sql");
         }
 
         var dataSource = new HikariDataSource(hikariConfig);
-        var sql = readResourceFile("schema.sql");
 
         log.info(sql);
         try (var connection = dataSource.getConnection();
@@ -78,7 +92,61 @@ public class App {
         });
 
         app.get("/", ctx -> {
-            ctx.render("index.jte");
+            var page = new MainPage();
+            ctx.render("index.jte", model("page", page));
+        });
+
+        app.get("/urls/{id}", ctx -> {
+            var id = ctx.pathParamAsClass("id", Long.class).get();
+            var urlOptional = UrlRepository.find(id);
+            if (urlOptional.isPresent()) {
+                var page = new UrlPage(urlOptional.get());
+                ctx.render("urls/show.jte", model("page", page));
+            } else {
+                ctx.status(404).result("URL not found");
+            }
+        });
+
+        app.get("/urls", ctx -> {
+            List<Url> urls = UrlRepository.getAllUrls();
+            String error = ctx.consumeSessionAttribute("error");
+            String warning = ctx.consumeSessionAttribute("warning");
+            String success = ctx.consumeSessionAttribute("success");
+            var page = new UrlsPage(urls);
+            page.setError(error);
+            page.setWarning(warning);
+            page.setSuccess(success);
+            ctx.render("urls/index.jte", model("page", page));
+        });
+
+        app.post("/urls", ctx -> {
+            var inputUrl = ctx.formParam("url");
+
+            try {
+                URI uri = new URI(inputUrl);
+                URL url = uri.toURL();
+
+                var domainWithPort = url.getProtocol()
+                       + "://"
+                       + url.getHost()
+                       + (url.getPort() == -1 ? "" : ":"
+                       + url.getPort());
+
+                var existingUrl = UrlRepository.findByDomain(domainWithPort);
+                if (existingUrl.isPresent()) {
+                    ctx.sessionAttribute("error", "Страница уже существует | Page already exist");
+                    ctx.redirect("/urls");
+                    return;
+                }
+
+                Url newUrl = new Url(domainWithPort, new Timestamp(System.currentTimeMillis()));
+                UrlRepository.save(newUrl);
+                ctx.sessionAttribute("success", "Страница успешно добавлена");
+                ctx.redirect("/urls");
+            } catch (URISyntaxException | MalformedURLException e) {
+                ctx.sessionAttribute("error", "Некорректный URL");
+                ctx.redirect("/urls");
+            }
         });
 
         return app;

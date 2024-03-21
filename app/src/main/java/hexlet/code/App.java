@@ -63,16 +63,7 @@ public class App {
         var hikariConfig = new HikariConfig();
         var databaseUrl = getDatabaseUrl();
         hikariConfig.setJdbcUrl(databaseUrl);
-        /*var sql = "";
-        if (databaseUrl.startsWith("jdbc:h2")) {
-            hikariConfig.setDriverClassName("org.h2.Driver");
-            sql = readResourceFile("h2_schema.sql");
-        } else if (databaseUrl.startsWith("jdbc:postgresql")) {
-            hikariConfig.setDriverClassName("org.postgresql.Driver");
-            sql = readResourceFile("postgres_schema.sql");
-        }*/
         var sql = readResourceFile("schema.sql");
-
         var dataSource = new HikariDataSource(hikariConfig);
 
         log.info(sql);
@@ -121,28 +112,22 @@ public class App {
 
         app.post("/urls", ctx -> {
             var inputUrl = ctx.formParam("url");
-
             try {
                 if (!inputUrl.startsWith("http://") && !inputUrl.startsWith("https://")) {
                     throw new IllegalArgumentException();
                 }
-
                 URI uri = new URI(inputUrl);
                 URL url = uri.toURL();
-
                 var domainWithPort = url.getProtocol() + "://" + url.getHost()
                         + (url.getPort() == -1 ? "" : ":" + url.getPort());
-
                 var existingUrl = UrlRepository.findByDomain(domainWithPort);
                 if (existingUrl.isPresent()) {
                     ctx.sessionAttribute("error", "Страница уже существует: " + existingUrl.get().getName());
                     ctx.redirect("/urls");
                     return;
                 }
-
                 Url newUrl = new Url(domainWithPort, new Timestamp(System.currentTimeMillis()));
                 UrlRepository.save(newUrl);
-
                 ctx.sessionAttribute("success", "Страница успешно добавлена");
                 ctx.redirect("/urls");
             } catch (MalformedURLException e) {

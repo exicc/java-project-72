@@ -29,7 +29,6 @@ public class UrlRepository extends BaseRepository {
             }
         }
     }
-
     public static Optional<Url> findByDomain(String domain) throws SQLException {
         var sql = "SELECT * FROM urls WHERE name = ?";
         try (var conn = dataSource.getConnection();

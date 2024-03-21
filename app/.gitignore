@@ -33,17 +33,5 @@ bin/
 .DS_Store
 /.idea/
 
-### JTE ###
-/jte-classes/
-/jte/jte/
-/jte/jte-classes/
-/jte-kotlin/jte-classes/
-/jte-watcher/jte-classes/
-/test/jte-runtime-test/jte-classes/
-/test/jte-runtime-test-kotlin/jte-classes/
-/test/jte-runtime-test-gradle/jte-classes/
-/test/jte-runtime-test-gradle-convention/jte-classes/
-/test/jte-runtime-test-gradle-kotlin-convention/jte-classes/
-/test/jte-hotreload-test/jte-classes/
-/test/kte-runtime-test-gradle-kotlin-convention/jte-classes/
+
 /app.iml

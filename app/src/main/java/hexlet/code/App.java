@@ -63,14 +63,15 @@ public class App {
         var hikariConfig = new HikariConfig();
         var databaseUrl = getDatabaseUrl();
         hikariConfig.setJdbcUrl(databaseUrl);
-        var sql = "";
+        /*var sql = "";
         if (databaseUrl.startsWith("jdbc:h2")) {
             hikariConfig.setDriverClassName("org.h2.Driver");
             sql = readResourceFile("h2_schema.sql");
         } else if (databaseUrl.startsWith("jdbc:postgresql")) {
             hikariConfig.setDriverClassName("org.postgresql.Driver");
             sql = readResourceFile("postgres_schema.sql");
-        }
+        }*/
+        var sql = readResourceFile("schema.sql");
 
         var dataSource = new HikariDataSource(hikariConfig);
 
@@ -134,7 +135,7 @@ public class App {
 
                 var existingUrl = UrlRepository.findByDomain(domainWithPort);
                 if (existingUrl.isPresent()) {
-                    ctx.sessionAttribute("error", "Страница уже существует | Page already exist");
+                    ctx.sessionAttribute("error", "Страница уже существует: " + existingUrl.get().getName());
                     ctx.redirect("/urls");
                     return;
                 }
@@ -148,7 +149,7 @@ public class App {
                 ctx.sessionAttribute("error", "Некорректный URL");
                 ctx.redirect("/urls");
             } catch (IllegalArgumentException e) {
-                ctx.sessionAttribute("error", "URL не является абсолютным | URL is not absolute");
+                ctx.sessionAttribute("error", "URL не является абсолютным");
                 ctx.redirect("/urls");
             }
         });

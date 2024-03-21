@@ -14,20 +14,22 @@ import java.util.Optional;
 public class UrlRepository extends BaseRepository {
     public static void save(Url url) throws SQLException {
         var sql = "INSERT INTO urls (name, created_at) VALUES (?, ?)";
+        var datetime = new Timestamp(System.currentTimeMillis());
         try (var conn = dataSource.getConnection();
-                var preparedStatement = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             var preparedStatement = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             preparedStatement.setString(1, url.getName());
-            preparedStatement.setTimestamp(2, url.getCreatedAt());
+            preparedStatement.setTimestamp(2, datetime);
             preparedStatement.executeUpdate();
             var generatedKeys = preparedStatement.getGeneratedKeys();
             if (generatedKeys.next()) {
                 url.setId(generatedKeys.getLong(1));
-                System.out.println("New URL ID: " + url.getId());
+                url.setCreatedAt(datetime);
             } else {
                 throw new SQLException("DB have not returned an id after saving an entity");
             }
         }
     }
+
     public static Optional<Url> findByDomain(String domain) throws SQLException {
         var sql = "SELECT * FROM urls WHERE name = ?";
         try (var conn = dataSource.getConnection();
@@ -68,10 +70,10 @@ public class UrlRepository extends BaseRepository {
         try (var conn = dataSource.getConnection();
              var stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, id);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                String name = rs.getString("name");
-                Timestamp createdAt = rs.getTimestamp("created_at");
+            var resultSet = stmt.executeQuery();
+            if (resultSet.next()) {
+                String name = resultSet.getString("name");
+                Timestamp createdAt = resultSet.getTimestamp("created_at");
                 var url = new Url(name, createdAt);
                 url.setId(id);
                 return Optional.of(url);

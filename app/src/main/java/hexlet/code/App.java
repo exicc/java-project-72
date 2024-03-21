@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
@@ -119,35 +118,6 @@ public class App {
             ctx.render("urls/index.jte", model("page", page));
         });
 
-        /*app.post("/urls", ctx -> {
-            var inputUrl = ctx.formParam("url");
-
-            try {
-                URI uri = new URI(inputUrl);
-                URL url = uri.toURL();
-
-                var domainWithPort = url.getProtocol()
-                       + "://"
-                       + url.getHost()
-                       + (url.getPort() == -1 ? "" : ":"
-                       + url.getPort());
-
-                var existingUrl = UrlRepository.findByDomain(domainWithPort);
-                if (existingUrl.isPresent()) {
-                    ctx.sessionAttribute("error", "Страница уже существует | Page already exist");
-                    ctx.redirect("/urls");
-                    return;
-                }
-
-                Url newUrl = new Url(domainWithPort, new Timestamp(System.currentTimeMillis()));
-                UrlRepository.save(newUrl);
-                ctx.sessionAttribute("success", "Страница успешно добавлена");
-                ctx.redirect("/urls");
-            } catch (URISyntaxException | MalformedURLException e) {
-                ctx.sessionAttribute("error", "Некорректный URL");
-                ctx.redirect("/urls");
-            }
-        });*/
         app.post("/urls", ctx -> {
             var inputUrl = ctx.formParam("url");
 
@@ -182,8 +152,6 @@ public class App {
                 ctx.redirect("/urls");
             }
         });
-
-
         return app;
     }
 }

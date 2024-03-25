@@ -8,7 +8,7 @@
         <form action="/urls" method="post">
             <div class="mb-3">
                 <label for="url" class="form-label">Введите URL:</label>
-                <input type="text" class="form-control" id="url" name="url" placeholder="URL">
+                <input type="text" class="form-control" id="url" name="url" placeholder="Ссылка">
             </div>
             <button type="submit" class="btn btn-primary">Проверить</button>
         </form>

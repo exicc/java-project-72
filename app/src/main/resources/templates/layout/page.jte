@@ -4,20 +4,21 @@
 @param BasePage page = null
 
 <!doctype html>
-<html lang="en">
+<html lang="ru">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Hexlet project</title>
+        <title>Анализатор страниц</title>
         <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     </head>
-    <body>
+    <body class="d-flex flex-column min-vh-100">
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
             <a class="navbar-brand" href="/">Главная</a>
-            <a class="navbar-brand" href="/urls">Список Url'ов</a>
+            <a class="navbar-brand" href="/urls">Сайты</a>
         </nav>
-
         @if(page != null)
             @if(page.getWarning() != null)
                 <div class="alert alert-warning alert-dismissible fade show" role="alert">
@@ -44,13 +45,10 @@
                 </div>
             @endif
         @endif
-
-
-        <div class="container mt-4">
-            ${content}
-        </div>
-
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        <main class="flex-grow-1">
+            <section>
+                ${content}
+            </section>
+        </main>
     </body>
 </html>

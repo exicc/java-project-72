@@ -14,7 +14,7 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
     </head>
     <body class="d-flex flex-column">
-        <nav class="navbar navbar-expand-lg bg-body-tertiary navbar-light bg-light">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <div class="container-fluid">
                 <a class="navbar-brand" href="/">Анализатор страниц</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Переключатель навигации">
@@ -36,25 +36,19 @@
             @if(page.getWarning() != null)
                 <div class="alert alert-warning alert-dismissible fade show" role="alert">
                     ${page.getWarning()}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
             @if(page.getError() != null)
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     ${page.getError()}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
             @if(page.getSuccess() != null)
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     ${page.getSuccess()}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
-
-                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
         @endif

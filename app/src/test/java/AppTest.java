@@ -34,7 +34,7 @@ public class AppTest {
         JavalinTest.test(app, (server, client) -> {
             var response = client.get("/urls");
             assertThat(response.code()).isEqualTo(200);
-            assertThat(response.body().string()).contains("Список URL");
+            assertThat(response.body().string()).contains("Сайты");
         });
     }
     @Test

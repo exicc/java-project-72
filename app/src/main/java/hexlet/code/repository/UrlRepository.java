@@ -36,9 +36,10 @@ public class UrlRepository extends BaseRepository {
             stmt.setString(1, domain);
             ResultSet resultSet = stmt.executeQuery();
             if (resultSet.next()) {
+                var id = resultSet.getLong("id");
                 var name = resultSet.getString("name");
                 var timestamp = resultSet.getTimestamp("created_at");
-                var url = new Url(name, timestamp);
+                var url = new Url(id, name, timestamp);
                 url.setName(name);
                 return Optional.of(url);
             } else {
@@ -64,7 +65,7 @@ public class UrlRepository extends BaseRepository {
         }
         return result;
     }
-    public static Optional<Url> find(long id) throws SQLException {
+    public static Optional<Url> findByID(long id) throws SQLException {
         String sql = "SELECT * FROM urls WHERE id = ?";
         try (var conn = dataSource.getConnection();
              var stmt = conn.prepareStatement(sql)) {

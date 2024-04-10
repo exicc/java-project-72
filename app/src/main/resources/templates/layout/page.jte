@@ -33,12 +33,6 @@
             </div>
         </nav>
         @if(page != null)
-            @if(page.getWarning() != null)
-                <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                    ${page.getWarning()}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
             @if(page.getError() != null)
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     ${page.getError()}

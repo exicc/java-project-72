@@ -19,12 +19,17 @@
                 <tbody>
                     @if (page != null)
                         @for (var url : page.getUrls())
-                                <tr>
-                                    <td>${url.getId()}</td>
-                                    <td><a href="${NamedRoutes.urlPath(url.getId())}">${url.getName()}</a></td>
+                            <tr>
+                                <td>${url.getId()}</td>
+                                <td><a href="${NamedRoutes.urlPath(url.getId())}">${url.getName()}</a></td>
+                                @if(page.getLastCheck(url.getId()).isPresent())
+                                    <td>${page.getLastCheck(url.getId()).get().getFormattedTimestamp()}</td>
+                                    <td>${page.getLastCheck(url.getId()).get().getStatusCode()}</td>
+                                @else
                                     <td></td>
                                     <td></td>
-                                </tr>
+                                @endif
+                            </tr>
                         @endfor
                     @endif
                 </tbody>

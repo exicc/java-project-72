@@ -2,7 +2,8 @@
 @param UrlPage page
 
 @template.layout.page(
-content = @`
+    page = page,
+    content = @`
     <section>
         <div class="container-lg mt-5">
             <h1>Сайт: ${page.getUrl().getName()}</h1>
@@ -18,12 +19,12 @@ content = @`
                     </tr>
                     <tr>
                         <td><strong>Дата создания</strong></td>
-                        <td>${page.getUrl().getCreatedAt().toString()}</td>
+                        <td>${page.getUrl().getFormattedTimestamp()}</td>
                     </tr>
                 </tbody>
             </table>
             <h2 class="mt-5">Проверки</h2>
-            <form method="post" action="/urls/1/checks">
+            <form method="post" action="/urls/${page.getUrl().getId()}/checks">
                 <button type="submit" class="btn btn-primary">Запустить проверку</button>
             </form>
             <table class="table table-bordered table-hover mt-3">
@@ -38,6 +39,20 @@ content = @`
                     </tr>
                 </thead>
                 <tbody>
+                    @if(!page.getUrlChecks().isEmpty())
+                        @for(var urlCheck : page.getUrlChecks())
+                            @if(urlCheck.getUrlId() == page.getUrl().getId())
+                                <tr>
+                                    <td>${urlCheck.getId()}</td>
+                                    <td>${urlCheck.getStatusCode()}</td>
+                                    <td>${urlCheck.getTitle()}</td>
+                                    <td>${urlCheck.getH1()}</td>
+                                    <td>${urlCheck.getDescription()}</td>
+                                    <td>${urlCheck.getFormattedTimestamp()}</td>
+                                </tr>
+                            @endif
+                        @endfor
+                    @endif
                 </tbody>
             </table>
         </div>

@@ -7,6 +7,5 @@ import lombok.Setter;
 @Setter
 public class BasePage {
     private String error;
-    private String warning;
     private String success;
 }

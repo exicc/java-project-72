@@ -1,6 +1,8 @@
 package hexlet.code.dto;
 
+import lombok.AllArgsConstructor;
 
-public final class MainPage {
+@AllArgsConstructor
+public final class MainPage extends BasePage {
 
 }

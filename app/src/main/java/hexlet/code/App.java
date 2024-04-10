@@ -6,7 +6,9 @@ import hexlet.code.dto.MainPage;
 import hexlet.code.dto.urls.UrlPage;
 import hexlet.code.dto.urls.UrlsPage;
 import hexlet.code.model.Url;
+import hexlet.code.model.UrlCheck;
 import hexlet.code.repository.BaseRepository;
+import hexlet.code.repository.UrlCheckRepository;
 import hexlet.code.repository.UrlRepository;
 import io.javalin.Javalin;
 import gg.jte.ContentType;
@@ -14,7 +16,14 @@ import gg.jte.TemplateEngine;
 import io.javalin.rendering.template.JavalinJte;
 import gg.jte.resolve.ResourceCodeResolver;
 
+import kong.unirest.HttpResponse;
+import kong.unirest.JsonNode;
+import kong.unirest.Unirest;
+import kong.unirest.UnirestException;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -25,7 +34,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import static io.javalin.rendering.template.TemplateUtil.model;
@@ -89,9 +97,14 @@ public class App {
 
         app.get("/urls/{id}", ctx -> {
             var id = ctx.pathParamAsClass("id", Long.class).get();
-            var urlOptional = UrlRepository.find(id);
+            var urlOptional = UrlRepository.findByID(id);
+            var urlChecks = UrlCheckRepository.getAllUrlChecks();
+            String error = ctx.consumeSessionAttribute("error");
+            String success = ctx.consumeSessionAttribute("success");
             if (urlOptional.isPresent()) {
-                var page = new UrlPage(urlOptional.get());
+                var page = new UrlPage(urlOptional.get(), urlChecks);
+                page.setError(error);
+                page.setSuccess(success);
                 ctx.render("urls/show.jte", model("page", page));
             } else {
                 ctx.status(404).result("URL not found");
@@ -99,13 +112,12 @@ public class App {
         });
 
         app.get("/urls", ctx -> {
-            List<Url> urls = UrlRepository.getAllUrls();
+            var urls = UrlRepository.getAllUrls();
+            var urlChecks = UrlCheckRepository.getAllUrlChecks();
             String error = ctx.consumeSessionAttribute("error");
-            String warning = ctx.consumeSessionAttribute("warning");
             String success = ctx.consumeSessionAttribute("success");
-            var page = new UrlsPage(urls);
+            var page = new UrlsPage(urls, urlChecks);
             page.setError(error);
-            page.setWarning(warning);
             page.setSuccess(success);
             ctx.render("urls/index.jte", model("page", page));
         });
@@ -135,6 +147,44 @@ public class App {
                 ctx.redirect("/urls");
             } catch (IllegalArgumentException e) {
                 ctx.sessionAttribute("error", "URL не является абсолютным");
+                ctx.redirect("/urls");
+            }
+        });
+
+        app.post("/urls/{id}/checks", ctx -> {
+            long id = ctx.pathParamAsClass("id", Long.class).get();
+
+            var urlOptional = UrlRepository.findByID(id);
+
+            if (urlOptional.isPresent()) {
+                var url  = urlOptional.get().getName();
+                try {
+                    HttpResponse<JsonNode> jsonResponse = Unirest.get(url).asJson();
+                    if (jsonResponse.getStatus() == 200) {
+                        var statusCode = jsonResponse.getStatus();
+
+                        Document doc = Jsoup.connect(url).get();
+                        var title = doc.title();
+
+                        Element h1Element = doc.selectFirst("h1");
+                        var h1 = h1Element != null ? h1Element.text() : "";
+
+                        var description = doc.select("meta[name=description]").attr("content");
+
+                        var check = new UrlCheck(statusCode, title, h1, description, id);
+                        UrlCheckRepository.save(check);
+                        ctx.sessionAttribute("success", "Страница успешно проверена");
+                        ctx.redirect("/urls/" + id);
+                    } else {
+                        ctx.sessionAttribute("error", "Ошибка при выполнении запроса 1: " + jsonResponse.getStatus());
+                        ctx.redirect("/urls/" + id);
+                    }
+                } catch (UnirestException e) {
+                    ctx.sessionAttribute("error", "Ошибка при выполнении запроса 2: " + e.getMessage());
+                    ctx.redirect("/urls/" + id);
+                }
+            } else {
+                ctx.sessionAttribute("error", "URL с ID " + id + " не найден");
                 ctx.redirect("/urls");
             }
         });

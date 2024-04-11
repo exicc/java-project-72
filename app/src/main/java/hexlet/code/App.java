@@ -21,6 +21,7 @@ import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
 import kong.unirest.UnirestException;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -176,12 +177,15 @@ public class App {
                         ctx.sessionAttribute("success", "Страница успешно проверена");
                         ctx.redirect("/urls/" + id);
                     } else {
-                        ctx.sessionAttribute("error", "Ошибка при выполнении запроса 1: " + jsonResponse.getStatus());
+                        ctx.sessionAttribute("error", "Ошибка при выполнении запроса : " + jsonResponse.getStatus());
                         ctx.redirect("/urls/" + id);
                     }
-                } catch (UnirestException e) {
-                    ctx.sessionAttribute("error", "Ошибка при выполнении запроса 2: " + e.getMessage());
-                    ctx.redirect("/urls/" + id);
+                } catch (HttpStatusException e) {
+                    ctx.sessionAttribute("error", "URL недоступен");
+                    ctx.redirect("/urls" + id);
+                } catch (UnirestException e){
+                ctx.sessionAttribute("error", "Время ожидания запроса истекло");
+                ctx.redirect("/urls/" + id);
                 }
             } else {
                 ctx.sessionAttribute("error", "URL с ID " + id + " не найден");

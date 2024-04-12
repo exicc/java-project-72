@@ -57,7 +57,7 @@ public class AppTest {
                 "fake page",
                 optionalUrl.get().getId());
         UrlCheckRepository.save(newUrlCheck);
-        urlCheck = UrlCheckRepository.getAllUrlChecks().getLast();
+        urlCheck = UrlCheckRepository.getLastCreatedUrlCheck();
     }
     @Nested
     class UrlTest {

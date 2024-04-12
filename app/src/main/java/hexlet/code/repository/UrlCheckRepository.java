@@ -60,4 +60,25 @@ public class UrlCheckRepository extends BaseRepository {
         }
         return result;
     }
+
+    public static UrlCheck getLastCreatedUrlCheck() throws SQLException {
+        var sql = "SELECT * FROM url_checks ORDER BY id DESC LIMIT 1";
+        UrlCheck lastCreatedUrlCheck = null;
+        try (var conn = dataSource.getConnection();
+             var stmt = conn.prepareStatement(sql)) {
+            var resultSet = stmt.executeQuery();
+            if (resultSet.next()) {
+                lastCreatedUrlCheck = new UrlCheck(
+                        resultSet.getInt("status_code"),
+                        resultSet.getString("title"),
+                        resultSet.getString("h1"),
+                        resultSet.getString("description"),
+                        resultSet.getLong("url_id"),
+                        resultSet.getTimestamp("created_at")
+                );
+                lastCreatedUrlCheck.setId(resultSet.getLong("id"));
+            }
+        }
+        return lastCreatedUrlCheck;
+    }
 }

@@ -98,7 +98,7 @@ public class App {
 
         app.get("/urls/{id}", ctx -> {
             var id = ctx.pathParamAsClass("id", Long.class).get();
-            var urlOptional = UrlRepository.findByID(id);
+            var urlOptional = UrlRepository.findUrlByID(id);
             var urlChecks = UrlCheckRepository.getAllUrlChecks();
             String error = ctx.consumeSessionAttribute("error");
             String success = ctx.consumeSessionAttribute("success");
@@ -133,7 +133,7 @@ public class App {
                 URL url = uri.toURL();
                 var domainWithPort = url.getProtocol() + "://" + url.getHost()
                         + (url.getPort() == -1 ? "" : ":" + url.getPort());
-                var existingUrl = UrlRepository.findByDomain(domainWithPort);
+                var existingUrl = UrlRepository.getUrlByName(domainWithPort);
                 if (existingUrl.isPresent()) {
                     ctx.sessionAttribute("error", "Страница уже существует: " + existingUrl.get().getName());
                     ctx.redirect("/urls");
@@ -155,7 +155,7 @@ public class App {
         app.post("/urls/{id}/checks", ctx -> {
             long id = ctx.pathParamAsClass("id", Long.class).get();
 
-            var urlOptional = UrlRepository.findByID(id);
+            var urlOptional = UrlRepository.findUrlByID(id);
 
             if (urlOptional.isPresent()) {
                 var url  = urlOptional.get().getName();
@@ -183,9 +183,9 @@ public class App {
                 } catch (HttpStatusException e) {
                     ctx.sessionAttribute("error", "URL недоступен");
                     ctx.redirect("/urls" + id);
-                } catch (UnirestException e){
-                ctx.sessionAttribute("error", "Время ожидания запроса истекло");
-                ctx.redirect("/urls/" + id);
+                } catch (UnirestException e) {
+                    ctx.sessionAttribute("error", "Время ожидания запроса истекло");
+                    ctx.redirect("/urls/" + id);
                 }
             } else {
                 ctx.sessionAttribute("error", "URL с ID " + id + " не найден");

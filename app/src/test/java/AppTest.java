@@ -25,6 +25,7 @@ public class AppTest {
     Javalin app;
     static MockWebServer server;
     static MockResponse response;
+    static String url;
     static String domain;
     static Optional<Url> optionalUrl;
     static UrlCheck urlCheck;
@@ -38,7 +39,8 @@ public class AppTest {
         response = new MockResponse().setResponseCode(200).setBody(fakePageContent);
         server.enqueue(response);
         server.start();
-        domain = "http://" + server.getHostName();
+        url = "https://ru.hexlet.io";
+        domain = server.url("/").toString().replaceAll("/$", "");
     }
     @AfterAll
     public static void afterAll() throws IOException {
@@ -47,9 +49,9 @@ public class AppTest {
     @BeforeEach
     public final void setup() throws SQLException, IOException {
         app = App.getApp();
-        var newUrl = new Url(domain, new Timestamp(System.currentTimeMillis()));
+        var newUrl = new Url(url, new Timestamp(System.currentTimeMillis()));
         UrlRepository.save(newUrl);
-        optionalUrl = UrlRepository.getUrlByName(domain);
+        optionalUrl = UrlRepository.getUrlByName(url);
 
         var newUrlCheck = new UrlCheck(200,
                 "Fake Page",
@@ -111,7 +113,7 @@ public class AppTest {
                 assertThat(client.post("/urls", requestBody).code()).isEqualTo(200);
 
                 assertThat(optionalUrl.isPresent()).isTrue();
-                assertThat(optionalUrl.get().getName()).isEqualTo(domain);
+                assertThat(optionalUrl.get().getName()).isEqualTo(url);
 
                 client.post("/urls/" + optionalUrl.get().getId() + "/checks");
 

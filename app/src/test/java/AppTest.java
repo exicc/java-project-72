@@ -1,128 +1,177 @@
-import hexlet.code.App;
-import hexlet.code.model.Url;
-import hexlet.code.model.UrlCheck;
-import hexlet.code.repository.UrlCheckRepository;
-import hexlet.code.repository.UrlRepository;
-import io.javalin.Javalin;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import hexlet.code.utils.TestUtils;
 import io.javalin.testtools.JavalinTest;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.util.Optional;
-
+import org.junit.jupiter.api.Nested;
 import static org.assertj.core.api.Assertions.assertThat;
+import io.javalin.Javalin;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.MockResponse;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.Path;
+import java.sql.SQLException;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-public class AppTest {
+import hexlet.code.App;
 
-    Javalin app;
-    static MockWebServer server;
-    static MockResponse response;
-    static String url;
-    static String domain;
-    static Optional<Url> optionalUrl;
-    static UrlCheck urlCheck;
+class AppTest {
 
-    static String fakePageContent = "<html><head><title>Fake Page</title>"
-            + "<meta name=\"description\" content=\"This is a fake page for testing purposes\"></head>"
-            + "<body><h1>Welcome to Fake Page</h1><p>This is a fake page for testing purposes</p></body></html>";
-    @BeforeAll
-    public static void beforeAll() throws IOException, SQLException {
-        server = new MockWebServer();
-        response = new MockResponse().setResponseCode(200).setBody(fakePageContent);
-        server.enqueue(response);
-        server.start();
-        url = "https://ru.hexlet.io";
-        domain = server.url("/").toString().replaceAll("/$", "");
+    private static MockWebServer mockServer;
+    private Javalin app;
+    private Map<String, Object> existingUrl;
+    private Map<String, Object> existingUrlCheck;
+    private HikariDataSource dataSource;
+
+    private static Path getFixturePath(String fileName) {
+        return Paths.get("src", "test", "resources", "fixtures", fileName)
+                .toAbsolutePath().normalize();
     }
+
+    private static String readFixture(String fileName) throws IOException {
+        Path filePath = getFixturePath(fileName);
+        return Files.readString(filePath).trim();
+    }
+
+    private static String getDatabaseUrl() {
+        return System.getenv().getOrDefault("JDBC_DATABASE_URL", "jdbc:h2:mem:project");
+    }
+
+    @BeforeAll
+    public static void beforeAll() throws IOException {
+        mockServer = new MockWebServer();
+        MockResponse mockedResponse = new MockResponse()
+                .setBody(readFixture("index.html"));
+        mockServer.enqueue(mockedResponse);
+        mockServer.start();
+    }
+
     @AfterAll
     public static void afterAll() throws IOException {
-        server.shutdown();
+        mockServer.shutdown();
     }
-    @BeforeEach
-    public final void setup() throws SQLException, IOException {
-        app = App.getApp();
-        var newUrl = new Url(url, new Timestamp(System.currentTimeMillis()));
-        UrlRepository.save(newUrl);
-        optionalUrl = UrlRepository.getUrlByName(url);
 
-        var newUrlCheck = new UrlCheck(200,
-                "Fake Page",
-                "Fake Page",
-                "fake page",
-                optionalUrl.get().getId());
-        UrlCheckRepository.save(newUrlCheck);
-        urlCheck = UrlCheckRepository.getLastCreatedUrlCheck();
-    }
-    @Nested
-    class UrlTest {
-        @Test
-        public void testMainPage() {
-            JavalinTest.test(app, (server, client) -> {
-                var response = client.get("/");
-                assertThat(response.code()).isEqualTo(200);
-                assertThat(response.body().string()).contains("Анализатор страниц");
-            });
+    @BeforeEach
+    public void setUp() throws IOException, SQLException {
+        app = App.getApp();
+
+        var hikariConfig = new HikariConfig();
+        hikariConfig.setJdbcUrl(getDatabaseUrl());
+
+        dataSource = new HikariDataSource(hikariConfig);
+
+        var schema = AppTest.class.getClassLoader().getResource("schema.sql");
+        var file = new File(schema.getFile());
+        var sql = Files.lines(file.toPath())
+                .collect(Collectors.joining("\n"));
+
+        try (var connection = dataSource.getConnection();
+             var statement = connection.createStatement()) {
+            statement.execute(sql);
         }
 
+        String url = "https://en.hexlet.io";
+
+        TestUtils.addUrl(dataSource, url);
+        existingUrl = TestUtils.getUrlByName(dataSource, url);
+
+        TestUtils.addUrlCheck(dataSource, (long) existingUrl.get("id"));
+        existingUrlCheck = TestUtils.getUrlCheck(dataSource, (long) existingUrl.get("id"));
+    }
+
+    @Nested
+    class RootTest {
         @Test
-        public void testUrlsPage() {
+        void testIndex() {
+            JavalinTest.test(app, (server, client) -> {
+                assertThat(client.get("/").code()).isEqualTo(200);
+            });
+        }
+    }
+
+    @Nested
+    class UrlTest {
+
+        @Test
+        void testIndex() {
             JavalinTest.test(app, (server, client) -> {
                 var response = client.get("/urls");
                 assertThat(response.code()).isEqualTo(200);
                 assertThat(response.body().string())
-                        .contains(optionalUrl.get().getName())
-                        .contains(optionalUrl.get().getId().toString());
+                        .contains(existingUrl.get("name").toString())
+                        .contains(existingUrlCheck.get("status_code").toString());
             });
         }
 
         @Test
-        public void testUrlPage() {
-
+        void testShow() {
             JavalinTest.test(app, (server, client) -> {
-                var response = client.get("/urls/" + optionalUrl.get().getId().toString());
+                var response = client.get("/urls/" + existingUrl.get("id"));
                 assertThat(response.code()).isEqualTo(200);
                 assertThat(response.body().string())
-                        .contains(optionalUrl.get().getName())
-                        .contains(String.valueOf(urlCheck.getStatusCode()));
+                        .contains(existingUrl.get("name").toString())
+                        .contains(existingUrlCheck.get("status_code").toString());
             });
         }
 
         @Test
-        void testUrlNotFound() {
+        void testStore() {
+
+            String inputUrl = "https://ru.hexlet.io";
+
             JavalinTest.test(app, (server, client) -> {
-                var response = client.get("/urls/999999");
-                assertThat(response.code()).isEqualTo(404);
+                var requestBody = "url=" + inputUrl;
+                assertThat(client.post("/urls", requestBody).code()).isEqualTo(200);
+
+                var response = client.get("/urls");
+                assertThat(response.code()).isEqualTo(200);
+                assertThat(response.body().string())
+                        .contains(inputUrl);
+
+                var actualUrl = TestUtils.getUrlByName(dataSource, inputUrl);
+                assertThat(actualUrl).isNotNull();
+                assertThat(actualUrl.get("name").toString()).isEqualTo(inputUrl);
             });
         }
     }
 
     @Nested
     class UrlCheckTest {
+
         @Test
-        void test() {
+        void testStore() {
+            String url = mockServer.url("/").toString().replaceAll("/$", "");
+
             JavalinTest.test(app, (server, client) -> {
-                var requestBody = "url=" + domain;
+                var requestBody = "url=" + url;
                 assertThat(client.post("/urls", requestBody).code()).isEqualTo(200);
 
-                assertThat(optionalUrl.isPresent()).isTrue();
-                assertThat(optionalUrl.get().getName()).isEqualTo(url);
+                var actualUrl = TestUtils.getUrlByName(dataSource, url);
+                assertThat(actualUrl).isNotNull();
+                System.out.println("\n!!!!!");
+                System.out.println(actualUrl);
 
-                client.post("/urls/" + optionalUrl.get().getId() + "/checks");
+                System.out.println("\n");
+                assertThat(actualUrl.get("name").toString()).isEqualTo(url);
 
-                assertThat(client.get("/urls/" + optionalUrl.get().getId()).code())
+                client.post("/urls/" + actualUrl.get("id") + "/checks");
+
+                assertThat(client.get("/urls/" + actualUrl.get("id")).code())
                         .isEqualTo(200);
-                assertThat(urlCheck).isNotNull();
-                assertThat(urlCheck.getTitle()).contains("Fake Page");
-                assertThat(urlCheck.getH1()).contains("Fake Page");
-                assertThat(urlCheck.getDescription()).contains("fake page");
+
+                var actualCheck = TestUtils.getUrlCheck(dataSource, (long) actualUrl.get("id"));
+                System.out.println(actualCheck);
+                assertThat(actualCheck).isNotNull();
+                assertThat(actualCheck.get("title")).isEqualTo("Test page");
+                assertThat(actualCheck.get("h1")).isEqualTo("Do not expect a miracle, miracles yourself!");
+                assertThat(actualCheck.get("description")).isEqualTo("statements of great people");
             });
         }
     }

@@ -6,7 +6,9 @@ import hexlet.code.model.Url;
 import hexlet.code.model.UrlCheck;
 import hexlet.code.repository.UrlCheckRepository;
 import hexlet.code.repository.UrlRepository;
+import hexlet.code.util.NamedRoutes;
 import io.javalin.http.Context;
+import io.javalin.http.HttpStatus;
 import io.javalin.http.NotFoundResponse;
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
@@ -18,17 +20,20 @@ import org.jsoup.nodes.Element;
 import java.net.URI;
 import java.net.URL;
 import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.util.Map;
 import java.util.Optional;
 
 import static io.javalin.rendering.template.TemplateUtil.model;
 
 public class UrlsController {
     public static void index(Context ctx) throws SQLException {
+
         var urls = UrlRepository.getAllUrls();
-        var urlChecks = UrlCheckRepository.getAllUrlChecks();
+        Map<Long, UrlCheck> urlChecks = UrlCheckRepository.findLatestChecks();
+
         String error = ctx.consumeSessionAttribute("error");
         String success = ctx.consumeSessionAttribute("success");
+
         var page = new UrlsPage(urls, urlChecks);
         page.setError(error);
         page.setSuccess(success);
@@ -36,11 +41,16 @@ public class UrlsController {
     }
 
     public static void show(Context ctx) throws SQLException {
-        var id = ctx.pathParamAsClass("id", Long.class).get();
-        var urlOptional = UrlRepository.findUrlByID(id);
+
+        long id = ctx.pathParamAsClass("id", Long.class).getOrDefault(null);
+
+        var urlOptional = Optional.ofNullable(UrlRepository.findUrlByID(id))
+                .orElseThrow(() -> new NotFoundResponse("URL с ID " + id + " не найден"));
+
         var urlChecks = UrlCheckRepository.getAllUrlChecks();
         String error = ctx.consumeSessionAttribute("error");
         String success = ctx.consumeSessionAttribute("success");
+
         if (urlOptional.isPresent()) {
             var page = new UrlPage(urlOptional.get(), urlChecks);
             page.setError(error);
@@ -54,10 +64,8 @@ public class UrlsController {
     public static void checkUrl(Context ctx) throws SQLException {
 
         long id = ctx.pathParamAsClass("id", Long.class).getOrDefault(null);
-
         var urlOptional = Optional.ofNullable(UrlRepository.findUrlByID(id)
                 .orElseThrow(() -> new NotFoundResponse("URL с ID " + id + " не найден")));
-
 
         try {
             HttpResponse<String> response = Unirest.get(urlOptional.get().getName()).asString();
@@ -70,7 +78,8 @@ public class UrlsController {
             var descriptionElement = doc.selectFirst("meta[name=description]");
             var description = descriptionElement == null ? "" : descriptionElement.attr("content");
 
-            var newUrlCheck = new UrlCheck(statusCode, title, h1, description, id);
+            var newUrlCheck = new UrlCheck(statusCode, title, h1, description);
+            newUrlCheck.setUrlId(id);
             UrlCheckRepository.save(newUrlCheck);
             ctx.sessionAttribute("success", "Страница успешно проверена");
             ctx.redirect("/urls/" + id);
@@ -82,29 +91,36 @@ public class UrlsController {
         ctx.redirect("/urls/" + urlOptional.get().getId());
     }
 
-    public static void create(Context ctx) {
-        var inputUrl = ctx.formParamAsClass("url", String.class).getOrDefault(null);
+    public static void createUrl(Context ctx) throws SQLException {
+        var inputUrl = ctx.formParam("url");
+        URL parsedUrl;
+
         try {
-            if (inputUrl.isEmpty() || (!inputUrl.startsWith("http://") && !inputUrl.startsWith("https://"))) {
-                throw new IllegalArgumentException("Некорректный URL");
-            }
-            URI uri = new URI(inputUrl);
-            URL url = uri.toURL();
-            var domainWithPort = url.getProtocol() + "://" + url.getHost()
-                    + (url.getPort() == -1 ? "" : ":" + url.getPort());
-            var existingUrl = UrlRepository.getUrlByName(domainWithPort);
-            if (existingUrl.isPresent()) {
-                ctx.sessionAttribute("error", "Страница уже существует: " + existingUrl.get().getName());
-                ctx.redirect("/urls");
-                return;
-            }
-            Url newUrl = new Url(domainWithPort, new Timestamp(System.currentTimeMillis()));
+            var uri = new URI(inputUrl);
+            parsedUrl = uri.toURL();
+        } catch (Exception e) {
+            ctx.sessionAttribute("error", "Некорректный URL");
+            ctx.redirect(NamedRoutes.rootPath());
+            return;
+        }
+        String normalizedUrl = String
+                .format(
+                        "%s://%s%s",
+                        parsedUrl.getProtocol(),
+                        parsedUrl.getHost(),
+                        parsedUrl.getPort() == -1 ? "" : ":" + parsedUrl.getPort()
+                )
+                .toLowerCase();
+
+        Url url = UrlRepository.findUrlByName(normalizedUrl).orElse(null);
+
+        if (url != null) {
+            ctx.sessionAttribute("error", "Страница уже существует");
+        } else {
+            Url newUrl = new Url(normalizedUrl);
             UrlRepository.save(newUrl);
             ctx.sessionAttribute("success", "Страница успешно добавлена");
-            ctx.redirect("/urls");
-        } catch (Exception e) {
-            ctx.sessionAttribute("error", e.getMessage());
         }
-        ctx.redirect("/urls");
+        ctx.redirect("/urls", HttpStatus.forStatus(302));
     }
 }

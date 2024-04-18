@@ -13,6 +13,9 @@ public final class Url {
     Long id;
     String name;
     Timestamp createdAt;
+    public Url(String name) {
+        this.name = name;
+    }
     public Url(String name, Timestamp createdAt) {
         this.name = name;
         this.createdAt = createdAt;

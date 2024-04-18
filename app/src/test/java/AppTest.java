@@ -1,6 +1,6 @@
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import hexlet.code.utils.TestUtils;
+import hexlet.code.util.TestUtils;
 import io.javalin.testtools.JavalinTest;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.AfterAll;

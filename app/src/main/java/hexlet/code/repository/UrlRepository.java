@@ -27,7 +27,7 @@ public class UrlRepository extends BaseRepository {
             }
         }
     }
-    public static Optional<Url> getUrlByName(String url) throws SQLException {
+    public static Optional<Url> findUrlByName(String url) throws SQLException {
         var sql = "SELECT * FROM urls WHERE name = ?";
         try (var conn = dataSource.getConnection();
                 var stmt = conn.prepareStatement(sql)) {

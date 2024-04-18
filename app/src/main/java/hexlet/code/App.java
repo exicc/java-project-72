@@ -74,13 +74,16 @@ public class App {
 
         app.get("/", ctx -> {
             var page = new MainPage();
+            String error = ctx.consumeSessionAttribute("error");
+            String success = ctx.consumeSessionAttribute("success");
+            page.setError(error);
+            page.setSuccess(success);
             ctx.render("index.jte", model("page", page));
         });
-
         app.get("/urls", UrlsController::index);
         app.get("/urls/{id}", UrlsController::show);
 
-        app.post("/urls", UrlsController::create);
+        app.post("/urls", UrlsController::createUrl);
         app.post("/urls/{id}/checks", UrlsController::checkUrl);
 
         return app;

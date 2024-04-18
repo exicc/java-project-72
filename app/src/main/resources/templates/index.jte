@@ -2,7 +2,9 @@
 @param MainPage page
 
 
-@template.layout.page(content = @`
+@template.layout.page(
+    page = page,
+    content = @`
     <div class="container-fluid p-5">
         <div class="row">
             <div class="col-md-10 col-lg-8 mx-auto text-white">

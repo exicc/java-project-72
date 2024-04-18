@@ -22,9 +22,9 @@
                             <tr>
                                 <td>${url.getId()}</td>
                                 <td><a href="${NamedRoutes.urlPath(url.getId())}">${url.getName()}</a></td>
-                                @if(page.getLastCheck(url.getId()).isPresent())
-                                    <td>${page.getLastCheck(url.getId()).get().getFormattedTimestamp()}</td>
-                                    <td>${page.getLastCheck(url.getId()).get().getStatusCode()}</td>
+                                @if(page.getUrlChecks().containsKey(url.getId()))
+                                    <td>${page.getUrlChecks().get(url.getId()).getFormattedTimestamp()}</td>
+                                    <td>${page.getUrlChecks().get(url.getId()).getStatusCode()}</td>
                                 @else
                                     <td></td>
                                     <td></td>

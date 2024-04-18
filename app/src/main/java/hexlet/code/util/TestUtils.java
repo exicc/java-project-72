@@ -1,4 +1,4 @@
-package hexlet.code.utils;
+package hexlet.code.util;
 
 import com.zaxxer.hikari.HikariDataSource;
 import java.sql.SQLException;

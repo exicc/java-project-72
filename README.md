@@ -4,7 +4,7 @@
 
 #### [Deployed application](https://java-project-72-kq69.onrender.com/)
 
-![Img](https://imgur.com/a/331ggvw "Main page")
+![Img](https://i.imgur.com/Hv0WUXG.png "Main page")
 
 # Page Analyzer
 

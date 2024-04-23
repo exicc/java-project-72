@@ -52,11 +52,11 @@ public class UrlCheckRepository extends BaseRepository {
                         resultSet.getInt("status_code"),
                         resultSet.getString("title"),
                         resultSet.getString("h1"),
-                        resultSet.getString("description"),
-                        resultSet.getLong("url_id"),
-                        resultSet.getTimestamp("created_at")
+                        resultSet.getString("description")
                 );
                 urlCheck.setId(resultSet.getLong("id"));
+                urlCheck.setCreatedAt(resultSet.getTimestamp("created_at"));
+                urlCheck.setUrlId(resultSet.getLong("url_id"));
                 result.add(urlCheck);
             }
         }

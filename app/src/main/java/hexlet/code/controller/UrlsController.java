@@ -21,7 +21,6 @@ import java.net.URI;
 import java.net.URL;
 import java.sql.SQLException;
 import java.util.Map;
-import java.util.Optional;
 
 import static io.javalin.rendering.template.TemplateUtil.model;
 
@@ -44,31 +43,28 @@ public class UrlsController {
 
         long id = ctx.pathParamAsClass("id", Long.class).getOrDefault(null);
 
-        var urlOptional = Optional.ofNullable(UrlRepository.findUrlByID(id))
-                .orElseThrow(() -> new NotFoundResponse("URL с ID " + id + " не найден"));
-
+        var urlOptional = UrlRepository.findUrlByID(id).orElseThrow(() -> {
+            ctx.status(404).result("URL not found");
+            return new NotFoundResponse("URL с ID " + id + " не найден");
+        });
         var urlChecks = UrlCheckRepository.getAllUrlChecks();
         String error = ctx.consumeSessionAttribute("error");
         String success = ctx.consumeSessionAttribute("success");
 
-        if (urlOptional.isPresent()) {
-            var page = new UrlPage(urlOptional.get(), urlChecks);
-            page.setError(error);
-            page.setSuccess(success);
-            ctx.render("urls/show.jte", model("page", page));
-        } else {
-            ctx.status(404).result("URL not found");
-        }
+        var page = new UrlPage(urlOptional, urlChecks);
+        page.setError(error);
+        page.setSuccess(success);
+        ctx.render("urls/show.jte", model("page", page));
     }
 
     public static void checkUrl(Context ctx) throws SQLException {
 
         long id = ctx.pathParamAsClass("id", Long.class).getOrDefault(null);
-        var urlOptional = Optional.ofNullable(UrlRepository.findUrlByID(id)
-                .orElseThrow(() -> new NotFoundResponse("URL с ID " + id + " не найден")));
+        var urlOptional = UrlRepository.findUrlByID(id)
+                .orElseThrow(() -> new NotFoundResponse("URL с ID " + id + " не найден"));
 
         try {
-            HttpResponse<String> response = Unirest.get(urlOptional.get().getName()).asString();
+            HttpResponse<String> response = Unirest.get(urlOptional.getName()).asString();
 
             var statusCode = response.getStatus();
             Document doc = Jsoup.parse(response.getBody());
@@ -88,7 +84,7 @@ public class UrlsController {
         } catch (Exception e) {
             ctx.sessionAttribute("error", e.getMessage());
         }
-        ctx.redirect("/urls/" + urlOptional.get().getId());
+        ctx.redirect("/urls/" + urlOptional.getId());
     }
 
     public static void createUrl(Context ctx) throws SQLException {

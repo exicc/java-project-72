@@ -47,3 +47,4 @@ bin/
 /test/jte-hotreload-test/jte-classes/
 /test/kte-runtime-test-gradle-kotlin-convention/jte-classes/
 /app.iml
+/app/jte-classes/

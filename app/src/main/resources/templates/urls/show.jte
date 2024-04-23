@@ -19,7 +19,7 @@
                     </tr>
                     <tr>
                         <td><strong>Дата создания</strong></td>
-                        <td>${page.getUrl().getFormattedTimestamp()}</td>
+                        <td>${String.format("%1$TD %1$TH:%1$TM", page.getUrl().getCreatedAt())}</td>
                     </tr>
                 </tbody>
             </table>
@@ -39,20 +39,18 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @if(!page.getUrlChecks().isEmpty())
-                        @for(var urlCheck : page.getUrlChecks())
-                            @if(urlCheck.getUrlId() == page.getUrl().getId())
-                                <tr>
-                                    <td>${urlCheck.getId()}</td>
-                                    <td>${urlCheck.getStatusCode()}</td>
-                                    <td>${urlCheck.getTitle()}</td>
-                                    <td>${urlCheck.getH1()}</td>
-                                    <td>${urlCheck.getDescription()}</td>
-                                    <td>${urlCheck.getFormattedTimestamp()}</td>
-                                </tr>
-                            @endif
-                        @endfor
-                    @endif
+                    @for(var urlCheck : page.getUrlChecks())
+                        @if(urlCheck.getUrlId() == page.getUrl().getId())
+                            <tr>
+                                <td>${urlCheck.getId()}</td>
+                                <td>${urlCheck.getStatusCode()}</td>
+                                <td>${urlCheck.getTitle()}</td>
+                                <td>${urlCheck.getH1()}</td>
+                                <td>${urlCheck.getDescription()}</td>
+                                <td>${String.format("%1$TD %1$TH:%1$TM", urlCheck.getCreatedAt())}</td>
+                            </tr>
+                        @endif
+                    @endfor
                 </tbody>
             </table>
         </div>

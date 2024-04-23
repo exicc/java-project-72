@@ -23,7 +23,7 @@
                                 <td>${url.getId()}</td>
                                 <td><a href="${NamedRoutes.urlPath(url.getId())}">${url.getName()}</a></td>
                                 @if(page.getUrlChecks().containsKey(url.getId()))
-                                    <td>${page.getUrlChecks().get(url.getId()).getFormattedTimestamp()}</td>
+                                    <td>${String.format("%1$TD %1$TH:%1$TM", page.getUrlChecks().get(url.getId()).getCreatedAt())}</td>
                                     <td>${page.getUrlChecks().get(url.getId()).getStatusCode()}</td>
                                 @else
                                     <td></td>

@@ -43,10 +43,8 @@ public class UrlsController {
 
         long id = ctx.pathParamAsClass("id", Long.class).getOrDefault(null);
 
-        var urlOptional = UrlRepository.findUrlByID(id).orElseThrow(() -> {
-            ctx.status(404).result("URL not found");
-            return new NotFoundResponse("URL с ID " + id + " не найден");
-        });
+        var urlOptional = UrlRepository.findUrlByID(id)
+                .orElseThrow(() -> new NotFoundResponse("URL с ID " + id + " не найден"));
         var urlChecks = UrlCheckRepository.getAllUrlChecks();
         String error = ctx.consumeSessionAttribute("error");
         String success = ctx.consumeSessionAttribute("success");
